@@ -37,18 +37,17 @@ function Table() {
   };
 
   const filterByNumbers = () => {
-    const originalPLanets = contextPlanets;
     switch (comparison) {
     case 'maior que':
-      return setPlanets(originalPLanets
+      return setPlanets(planets
         .filter((obj) => Number(obj[column]) > Number(numberValue)));
 
     case 'menor que':
-      return setPlanets(originalPLanets
+      return setPlanets(planets
         .filter((obj) => Number(obj[column]) < Number(numberValue)));
 
     case 'igual a':
-      return setPlanets(originalPLanets
+      return setPlanets(planets
         .filter((obj) => Number(obj[column]) === Number(numberValue)));
 
     default:
