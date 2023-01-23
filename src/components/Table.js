@@ -8,6 +8,13 @@ function Table() {
   const [column, setColumn] = useState('population');
   const [comparison, setComparison] = useState('maior que');
   const [numberValue, setNumberValue] = useState(0);
+  const [columnList, setColumnList] = useState([
+    'population',
+    'orbital_period',
+    'diameter',
+    'rotation_period',
+    'surface_water',
+  ]);
   const { contextPlanets, setContextPlanets } = useContext(PlanetsContext);
 
   useEffect(() => {
@@ -37,23 +44,27 @@ function Table() {
   };
 
   const filterByNumbers = () => {
+    const removedColumn = columnList.filter((str) => str !== column);
+
     switch (comparison) {
     case 'maior que':
+      setColumnList(removedColumn);
       return setPlanets(planets
         .filter((obj) => Number(obj[column]) > Number(numberValue)));
 
     case 'menor que':
+      setColumnList(removedColumn);
       return setPlanets(planets
         .filter((obj) => Number(obj[column]) < Number(numberValue)));
 
     case 'igual a':
+      setColumnList(removedColumn);
       return setPlanets(planets
         .filter((obj) => Number(obj[column]) === Number(numberValue)));
 
     default:
       break;
     }
-    console.log('kkkk');
   };
 
   return (
@@ -65,11 +76,9 @@ function Table() {
           data-testid="column-filter"
           onChange={ ({ target: { value } }) => setColumn(value) }
         >
-          <option>population</option>
-          <option>orbital_period</option>
-          <option>diameter</option>
-          <option>rotation_period</option>
-          <option>surface_water</option>
+          { columnList.map((option) => (
+            <option key={ option }>{ option }</option>
+          )) }
         </select>
       </label>
       <label htmlFor="comparison-filter">
