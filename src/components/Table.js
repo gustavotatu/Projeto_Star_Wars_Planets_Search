@@ -5,6 +5,9 @@ import useFetch from '../hooks/useFetch';
 function Table() {
   const { makeFetch } = useFetch();
   const [planets, setPlanets] = useState([]);
+  const [column, setColumn] = useState('population');
+  const [comparison, setComparison] = useState('maior que');
+  const [numberValue, setNumberValue] = useState(0);
   const { contextPlanets, setContextPlanets } = useContext(PlanetsContext);
 
   useEffect(() => {
@@ -33,8 +36,67 @@ function Table() {
     }
   };
 
+  const filterByNumbers = () => {
+    const originalPLanets = contextPlanets;
+    switch (comparison) {
+    case 'maior que':
+      return setPlanets(originalPLanets
+        .filter((obj) => Number(obj[column]) > Number(numberValue)));
+
+    case 'menor que':
+      return setPlanets(originalPLanets
+        .filter((obj) => Number(obj[column]) < Number(numberValue)));
+
+    case 'igual a':
+      return setPlanets(originalPLanets
+        .filter((obj) => Number(obj[column]) === Number(numberValue)));
+
+    default:
+      break;
+    }
+    console.log('kkkk');
+  };
+
   return (
     <div>
+      <label htmlFor="column-filter">
+        Coluna:
+        <select
+          id="column-filter"
+          data-testid="column-filter"
+          onChange={ ({ target: { value } }) => setColumn(value) }
+        >
+          <option>population</option>
+          <option>orbital_period</option>
+          <option>diameter</option>
+          <option>rotation_period</option>
+          <option>surface_water</option>
+        </select>
+      </label>
+      <label htmlFor="comparison-filter">
+        Operador:
+        <select
+          id="comparison-filter"
+          data-testid="comparison-filter"
+          onChange={ ({ target: { value } }) => setComparison(value) }
+        >
+          <option>maior que</option>
+          <option>menor que</option>
+          <option>igual a</option>
+        </select>
+      </label>
+      <input
+        type="number"
+        data-testid="value-filter"
+        defaultValue={ 0 }
+        onChange={ ({ target: { value } }) => setNumberValue(value) }
+      />
+      <input
+        type="button"
+        data-testid="button-filter"
+        value="Filtrar"
+        onClick={ filterByNumbers }
+      />
       <label htmlFor="name-filter">
         Nome:
         <input
