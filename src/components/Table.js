@@ -1,13 +1,10 @@
+/* eslint-disable max-lines */
 import React, { useState, useEffect, useContext } from 'react';
 import PlanetsContext from '../context/PlanetsContext';
 import useFetch from '../hooks/useFetch';
 
 function Table() {
-  const defaultColumns = [
-    'population',
-    'orbital_period',
-    'diameter',
-    'rotation_period',
+  const defaultColumns = ['population', 'orbital_period', 'diameter', 'rotation_period',
     'surface_water',
   ];
   const { makeFetch } = useFetch();
@@ -18,6 +15,8 @@ function Table() {
   const [columnList, setColumnList] = useState(defaultColumns);
   const [removedColumns, setRemovedColumns] = useState([]);
   const [filterList, setFilterList] = useState([]);
+  const [columnOrder, setColumnOrder] = useState('population');
+  const [chosenOrder, setChosenOrder] = useState();
   const { contextPlanets, setContextPlanets } = useContext(PlanetsContext);
 
   useEffect(() => {
@@ -128,6 +127,36 @@ function Table() {
     }
   };
 
+  const orderPlanets = () => {
+    const unknowns = planets.filter((obj) => obj.population === 'unknown');
+    let sortedPlanets = [];
+
+    if (chosenOrder === 'asc') {
+      sortedPlanets = [...planets
+        .sort((a, b) => {
+          if (a === 'unknown') {
+            return false;
+          }
+          return Number(a[columnOrder]) - Number(b[columnOrder]);
+        })];
+    } else {
+      sortedPlanets = [...planets
+        .sort((a, b) => {
+          if (a === 'unknown') {
+            return false;
+          }
+          return Number(b[columnOrder]) - Number(a[columnOrder]);
+        })];
+    }
+    if (columnOrder === 'population') {
+      const removedUnknowns = sortedPlanets.filter((obj) => obj.population !== 'unknown');
+      removedUnknowns.push(unknowns[0]);
+      removedUnknowns.push(unknowns[1]);
+      return setPlanets(removedUnknowns);
+    }
+    return setPlanets(sortedPlanets);
+  };
+
   return (
     <div>
       <label htmlFor="column-filter">
@@ -190,6 +219,45 @@ function Table() {
         >
           Remover Filtros
         </button>) }
+      <div>
+        <select
+          data-testid="column-sort"
+          onChange={ ({ target: { value } }) => setColumnOrder(value) }
+        >
+          <option>population</option>
+          <option>orbital_period</option>
+          <option>diameter</option>
+          <option>rotation_period</option>
+          <option>surface_water</option>
+        </select>
+        <label htmlFor="asc-button">
+          <input
+            id="asc-button"
+            type="radio"
+            name="order-button"
+            data-testid="column-sort-input-asc"
+            onClick={ () => setChosenOrder('asc') }
+          />
+          Ascendente
+        </label>
+        <label htmlFor="desc-button">
+          <input
+            id="desc-button"
+            type="radio"
+            name="order-button"
+            data-testid="column-sort-input-desc"
+            onClick={ () => setChosenOrder('desc') }
+          />
+          Descendente
+        </label>
+        <button
+          type="button"
+          data-testid="column-sort-button"
+          onClick={ orderPlanets }
+        >
+          Ordenar
+        </button>
+      </div>
       <table>
         <tr>
           <th>Name</th>
@@ -208,7 +276,7 @@ function Table() {
         </tr>
         { planets && planets.map((obj) => (
           <tr key={ obj.name }>
-            <td>{ obj.name }</td>
+            <td data-testid="planet-name">{ obj.name }</td>
             <td>{ obj.rotation_period }</td>
             <td>{ obj.orbital_period }</td>
             <td>{ obj.diameter }</td>
