@@ -3,18 +3,21 @@ import PlanetsContext from '../context/PlanetsContext';
 import useFetch from '../hooks/useFetch';
 
 function Table() {
-  const { makeFetch } = useFetch();
-  const [planets, setPlanets] = useState([]);
-  const [column, setColumn] = useState('population');
-  const [comparison, setComparison] = useState('maior que');
-  const [numberValue, setNumberValue] = useState(0);
-  const [columnList, setColumnList] = useState([
+  const defaultColumns = [
     'population',
     'orbital_period',
     'diameter',
     'rotation_period',
     'surface_water',
-  ]);
+  ];
+  const { makeFetch } = useFetch();
+  const [planets, setPlanets] = useState([]);
+  const [column, setColumn] = useState('population');
+  const [comparison, setComparison] = useState('maior que');
+  const [numberValue, setNumberValue] = useState(0);
+  const [columnList, setColumnList] = useState(defaultColumns);
+  const [removedColumns, setRemovedColumns] = useState([]);
+  const [filterList, setFilterList] = useState([]);
   const { contextPlanets, setContextPlanets } = useContext(PlanetsContext);
 
   useEffect(() => {
@@ -28,14 +31,16 @@ function Table() {
       setContextPlanets(planetsInfo);
       setPlanets(planetsInfo);
     };
-
     getPlanets();
   }, []);
+
+  useEffect(() => {
+    setColumn(columnList[0]);
+  }, [columnList]);
 
   const filterByName = ({ target: { value } }) => {
     const lowerCaseValue = value.toLowerCase();
     const originalPLanets = contextPlanets;
-    console.log(value);
     setPlanets(originalPLanets
       .filter(({ name }) => name.toLowerCase().includes(lowerCaseValue)));
     if (value.length === 0) {
@@ -44,26 +49,82 @@ function Table() {
   };
 
   const filterByNumbers = () => {
-    const removedColumn = columnList.filter((str) => str !== column);
+    setColumnList(columnList.filter((str) => str !== column));
+    const RMColumns = removedColumns;
+    RMColumns.push(column);
+    setRemovedColumns(RMColumns);
+    const filters = filterList;
+    filters.push({
+      column,
+      comparison,
+      numberValue,
+    });
+    setFilterList(filters);
 
     switch (comparison) {
     case 'maior que':
-      setColumnList(removedColumn);
       return setPlanets(planets
         .filter((obj) => Number(obj[column]) > Number(numberValue)));
 
     case 'menor que':
-      setColumnList(removedColumn);
       return setPlanets(planets
         .filter((obj) => Number(obj[column]) < Number(numberValue)));
 
     case 'igual a':
-      setColumnList(removedColumn);
       return setPlanets(planets
         .filter((obj) => Number(obj[column]) === Number(numberValue)));
 
     default:
       break;
+    }
+  };
+
+  const removeAllFilters = () => {
+    setPlanets(contextPlanets);
+    setFilterList([]);
+    setColumnList(defaultColumns);
+  };
+
+  const removeFilter = ({ target: { id } }) => {
+    const targetFilter = filterList[id];
+    const filters = filterList.filter((obj) => obj !== targetFilter);
+    setFilterList(filters);
+
+    const currentColunms = columnList;
+    currentColunms.push(targetFilter.column);
+    setColumnList(currentColunms);
+
+    const defaultPlanets = contextPlanets;
+    let currentPlanets = [];
+
+    if (filters.length === 0) {
+      setPlanets(contextPlanets);
+    } else {
+      for (let i = 0; i < filters.length; i += 1) {
+        switch (filters[i].comparison) {
+        case 'maior que':
+          currentPlanets = defaultPlanets
+            .filter((obj) => (
+              Number(obj[filters[i].column]) > Number(filters[i].numberValue)));
+          break;
+
+        case 'menor que':
+          currentPlanets = defaultPlanets
+            .filter((obj) => (
+              Number(obj[filters[i].column]) < Number(filters[i].numberValue)));
+          break;
+
+        case 'igual a':
+          currentPlanets = defaultPlanets
+            .filter((obj) => (
+              Number(obj[filters[i].column]) === Number(filters[i].numberValue)));
+          break;
+
+        default:
+          break;
+        }
+      }
+      setPlanets(currentPlanets);
     }
   };
 
@@ -114,6 +175,21 @@ function Table() {
           onChange={ filterByName }
         />
       </label>
+      { filterList.length > 0
+      && filterList.map((obj, i) => (
+        <div key={ i } data-testid="filter">
+          <p>{ `${obj.column} ${obj.comparison} ${obj.numberValue}` }</p>
+          <button id={ i } onClick={ removeFilter }>Remover Filtro</button>
+        </div>
+      )) }
+      { filterList.length > 0
+      && (
+        <button
+          onClick={ removeAllFilters }
+          data-testid="button-remove-filters"
+        >
+          Remover Filtros
+        </button>) }
       <table>
         <tr>
           <th>Name</th>
@@ -151,5 +227,4 @@ function Table() {
     </div>
   );
 }
-
 export default Table;
