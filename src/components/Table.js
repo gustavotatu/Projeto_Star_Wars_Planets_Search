@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+/* eslint max-lines: ["error", 300] */
 import React, { useState, useEffect, useContext } from 'react';
 import PlanetsContext from '../context/PlanetsContext';
 import useFetch from '../hooks/useFetch';
