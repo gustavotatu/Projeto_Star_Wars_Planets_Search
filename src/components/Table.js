@@ -1,24 +1,27 @@
-/* eslint max-lines: ["error", 300] */
 import React, { useState, useEffect, useContext } from 'react';
 import PlanetsContext from '../context/PlanetsContext';
 import useFetch from '../hooks/useFetch';
+import useFilterName from '../hooks/useFilterName';
+import useFilterNumber from '../hooks/useFilterNumber';
+import useFilterRemove from '../hooks/useFilterRemove';
 
 function Table() {
   const defaultColumns = ['population', 'orbital_period', 'diameter', 'rotation_period',
     'surface_water',
   ];
   const { makeFetch } = useFetch();
+  const { nameFilter } = useFilterName();
+  const { numberFilter } = useFilterNumber();
+  const { removeFilterHook } = useFilterRemove();
   const [planets, setPlanets] = useState([]);
   const [column, setColumn] = useState('population');
   const [comparison, setComparison] = useState('maior que');
   const [numberValue, setNumberValue] = useState(0);
   const [columnList, setColumnList] = useState(defaultColumns);
-  const [removedColumns, setRemovedColumns] = useState([]);
   const [filterList, setFilterList] = useState([]);
   const [columnOrder, setColumnOrder] = useState('population');
   const [chosenOrder, setChosenOrder] = useState();
   const { contextPlanets, setContextPlanets } = useContext(PlanetsContext);
-
   useEffect(() => {
     const getPlanets = async () => {
       const planetsWithResidents = await makeFetch();
@@ -32,105 +35,43 @@ function Table() {
     };
     getPlanets();
   }, []);
-
   useEffect(() => {
     setColumn(columnList[0]);
   }, [columnList]);
-
   const filterByName = ({ target: { value } }) => {
-    const lowerCaseValue = value.toLowerCase();
-    const originalPLanets = contextPlanets;
-    setPlanets(originalPLanets
-      .filter(({ name }) => name.toLowerCase().includes(lowerCaseValue)));
-    if (value.length === 0) {
-      setPlanets(contextPlanets);
-    }
+    nameFilter(value, setPlanets);
   };
-
   const filterByNumbers = () => {
-    setColumnList(columnList.filter((str) => str !== column));
-    const RMColumns = removedColumns;
-    RMColumns.push(column);
-    setRemovedColumns(RMColumns);
-    const filters = filterList;
-    filters.push({
+    numberFilter([
+      setColumnList,
+      columnList,
       column,
+      filterList,
       comparison,
       numberValue,
-    });
-    setFilterList(filters);
-
-    switch (comparison) {
-    case 'maior que':
-      return setPlanets(planets
-        .filter((obj) => Number(obj[column]) > Number(numberValue)));
-
-    case 'menor que':
-      return setPlanets(planets
-        .filter((obj) => Number(obj[column]) < Number(numberValue)));
-
-    case 'igual a':
-      return setPlanets(planets
-        .filter((obj) => Number(obj[column]) === Number(numberValue)));
-
-    default:
-      break;
-    }
+      setFilterList,
+      setPlanets,
+      planets,
+    ]);
   };
-
   const removeAllFilters = () => {
     setPlanets(contextPlanets);
     setFilterList([]);
     setColumnList(defaultColumns);
   };
-
   const removeFilter = ({ target: { id } }) => {
-    const targetFilter = filterList[id];
-    const filters = filterList.filter((obj) => obj !== targetFilter);
-    setFilterList(filters);
-
-    const currentColunms = columnList;
-    currentColunms.push(targetFilter.column);
-    setColumnList(currentColunms);
-
-    const defaultPlanets = contextPlanets;
-    let currentPlanets = [];
-
-    if (filters.length === 0) {
-      setPlanets(contextPlanets);
-    } else {
-      for (let i = 0; i < filters.length; i += 1) {
-        switch (filters[i].comparison) {
-        case 'maior que':
-          currentPlanets = defaultPlanets
-            .filter((obj) => (
-              Number(obj[filters[i].column]) > Number(filters[i].numberValue)));
-          break;
-
-        case 'menor que':
-          currentPlanets = defaultPlanets
-            .filter((obj) => (
-              Number(obj[filters[i].column]) < Number(filters[i].numberValue)));
-          break;
-
-        case 'igual a':
-          currentPlanets = defaultPlanets
-            .filter((obj) => (
-              Number(obj[filters[i].column]) === Number(filters[i].numberValue)));
-          break;
-
-        default:
-          break;
-        }
-      }
-      setPlanets(currentPlanets);
-    }
+    removeFilterHook([
+      id,
+      filterList,
+      setFilterList,
+      columnList,
+      setColumnList,
+      setPlanets,
+    ]);
   };
-
   const orderPlanets = () => {
     const unknowns = planets.filter((obj) => obj.population === 'unknown');
     let sortedPlanets = [];
-
     if (chosenOrder === 'asc') {
       sortedPlanets = [...planets
         .sort((a, b) => {
@@ -156,7 +97,6 @@ function Table() {
     }
     return setPlanets(sortedPlanets);
   };
-
   return (
     <div>
       <label htmlFor="column-filter">
